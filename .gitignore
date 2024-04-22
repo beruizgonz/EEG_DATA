@@ -3,3 +3,11 @@
 
 # Ada Library Information
 *.ali
+
+preprocess_data/wandb/
+
+*.csv
+
+*.h5
+
+*.hdf5
