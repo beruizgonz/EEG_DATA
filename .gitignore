@@ -11,3 +11,23 @@ preprocess_data/wandb/
 *.h5
 
 *.hdf5
+
+data/SEEDV/1_1_20180804.cnt
+
+*.cnt
+
+data/TUEH/
+
+erp_checkpoints/
+
+emotion_checkpoints/
+
+*.ckpt
+
+data/DEAP/s01.dat
+
+*.dat
+
+licenses/
+
+wandb/

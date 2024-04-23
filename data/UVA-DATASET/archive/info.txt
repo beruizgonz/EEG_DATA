@@ -1,0 +1,74 @@
+Study;Dataset ID;Subject ID;Sex;Age;Condition;Trials
+Santamaría-Vázquez el at. 2019;0;0;M;27;Healthy;60
+;0;1;M;26;Healthy;60
+;0;2;M;27;Healthy;60
+;0;3;M;30;Healthy;60
+;0;4;M;35;Healthy;60
+;0;5;M;26;Healthy;60
+;0;6;M;27;Healthy;60
+;0;7;M;27;Healthy;60
+;0;8;F;28;Healthy;60
+;0;9;F;26;Healthy;60
+;0;10;M;27;Healthy;60
+;0;11;F;25;Healthy;60
+;0;12;F;23;Healthy;60
+;0;13;M;26;Healthy;60
+;0;14;M;27;Healthy;60
+;0;15;F;19;Healthy;60
+;0;16;M;19;Healthy;60
+;0;17;M;19;Healthy;60
+;0;18;F;19;Healthy;60
+;0;19;M;19;Healthy;60
+;0;20;F;19;Healthy;60
+;0;21;M;26;Healthy;60
+Martínez-Cagigal et al. 2019;1;22;M;25;Healthy;60
+;1;23;M;25;Healthy;66
+;1;24;M;24;Healthy;66
+;1;25;M;25;Healthy;65
+;1;26;M;25;Healthy;66
+;1;27;M;32;Healthy;72
+;1;28;M;24;Healthy;66
+;1;29;M;25;Healthy;60
+;1;30;F;23;Healthy;54
+;1;31;F;33;Healthy;54
+;1;32;M;46;Spinal cord injury;72
+;1;33;F;38;Friedreich’s ataxia;60
+;1;34;M;39;Spinal cord injury;66
+;1;35;F;49;Friedreich’s ataxia;72
+;1;36;M;31;Cerebral palsy;54
+;1;37;M;44;Friedreich’s ataxia;72
+;1;38;M;51;Polymalformative syndrome;66
+;1;39;M;47;Cerebral palsy;42
+;1;40;M;67;Cerebral palsy;60
+;1;41;M;47;Polymalformative syndrome;60
+;1;42;F;40;Friedreich’s ataxia;60
+;1;43;M;38;Spinal cord injury;60
+;1;44;M;50;Spinal cord injury;72
+;1;45;F;42;Cerebral palsy;66
+;1;46;F;45;Spinal cord injury;72
+;1;47;F;54;Stroke;60
+Martínez-Cagigal et al. 2017;2;48;M;26;Healthy;72
+;2;49;M;24;Healthy;77
+;2;50;F;25;Healthy;78
+;2;51;M;26;Healthy;96
+;2;52;F;23;Healthy;61
+;2;53;F;28;Healthy;72
+;2;54;M;30;Healthy;69
+;2;55;M;20;Healthy;72
+;2;56;M;24;Healthy;72
+;2;57;F;22;Healthy;72
+;2;58;F;30;Multiple sclerosis;88
+;2;59;M;31;Multiple sclerosis;90
+;2;60;M;43;Multiple sclerosis;79
+;2;61;F;47;Multiple sclerosis;108
+;2;62;M;56;Multiple sclerosis;90
+;2;63;M;35;Multiple sclerosis;90
+;2;64;M;41;Multiple sclerosis;86
+;2;65;F;49;Multiple sclerosis;90
+;2;66;M;44;Multiple sclerosis;86
+;2;67;F;41;Multiple sclerosis;88
+;2;68;M;43;Multiple sclerosis;84
+;2;69;M;44;Multiple sclerosis;87
+;2;70;M;52;Multiple sclerosis;90
+;2;71;F;38;Multiple sclerosis;90
+;2;72;M;47;Multiple sclerosis;73

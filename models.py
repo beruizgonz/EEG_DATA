@@ -45,7 +45,7 @@ class SSL_EEG(LightningModule):
         )
 
         #self.covnet = EEGInceptionBlock1(in_channels = 1, ncha=8, filters_per_branch=8, scales_samples=(500, 250, 125), dropout_rate=0.25, activation='ELU')
-        #self.covnet = Conv1DNet()
+        self.covnet = Conv1DNet()
         self.decoder = decoder(d_model=64, feat_dim = 8)
         self.loss_fn = loss_fn
         
@@ -55,7 +55,7 @@ class SSL_EEG(LightningModule):
         # x = x.reshape(x.shape[0],1, x.shape[1],
         #   x.shape[2])
         
-        #x = self.covnet(x)
+        x = self.covnet(x)
 
         # x = x.squeeze(-1)
         x, attn = self.encoder(x)
@@ -106,7 +106,7 @@ class EEG_ERP(LightningModule):
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def forward(self, x):
-        #x = self.covnet(x)
+        x = self.covnet(x)
         x, _ = self.encoder(x)
         x =  self.decoder(x)
         return x

@@ -22,7 +22,7 @@ dataset_path = 'data/deap_stress.h5'
 dataset = StressDataset(dataset_path, normalize='normalization')   
 dm = ERPDataModule(dataset)
 
-ckpt = os.path.join('checkpoints', 'SSL-1s-v12.ckpt')
+ckpt = os.path.join('checkpoints', 'SSL-1s-v17.ckpt')
 
 # Load the model from the checkpoint
 model = SSL_EEG.load_from_checkpoint(ckpt, decoder = MaskedDecoder, loss_fn= MaskedMSELoss)
@@ -32,8 +32,8 @@ conv = model.covnet
 #Load the encoder from the model
 encoder = model.encoder
 #Freeze the encoder
-# for param in encoder.parameters():
-#     param.requires_grad = False
+for param in encoder.parameters():
+    param.requires_grad = False
 
 for param in conv.parameters():
     param.requires_grad = False

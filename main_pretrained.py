@@ -37,7 +37,7 @@ def main():
         batch_size=32,
     )
 
-    encoder_args = {'feat_dim': 8, 'seq_len':512, 'd_model':64, 'n_heads': 8, 'num_layers': 1, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'LayerNorm'}
+    encoder_args = {'feat_dim': 8, 'seq_len':512, 'd_model':64, 'n_heads': 8, 'num_layers': 1, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'BatchNorm'}
     pretext = SSL_EEG(learning_rate=1e-3, encoder_args=encoder_args, decoder = MaskedDecoder, loss_fn=MaskedMSELoss())
 
     wandb_logger = WandbLogger(

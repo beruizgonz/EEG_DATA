@@ -1,8 +1,8 @@
 
 import numpy as np
 import torch
-import os 
-import pandas as pd 
+import os
+import pandas as pd
 import h5py
 from torch.utils.data import Dataset
 import sys
@@ -24,7 +24,7 @@ class MaskedDataset(Dataset):
         self.mask = self.mask.to_numpy()
 
         self.raw_eeg = self.raw_eeg.reshape(-1, 8, seq_length) #(n_samples, n_channels, n_timesteps)
-        self.masked_eeg = self.masked_eeg.reshape(-1, 8, seq_length) 
+        self.masked_eeg = self.masked_eeg.reshape(-1, 8, seq_length)
         self.mask = self.mask.reshape(-1, 8, seq_length)
 
         self.raw_eeg_n = self.raw_eeg.copy()
@@ -34,22 +34,22 @@ class MaskedDataset(Dataset):
         elif normalize == 'min_max':
             self.raw_eeg = normalize_min_max(self.raw_eeg, self.raw_eeg_n)
             self.masked_eeg = normalize_min_max(self.raw_eeg, self.masked_eeg)
-            
+
         self.raw_eeg_n = self.raw_eeg_n.reshape(-1, seq_length, 8)
         self.masked_eeg = self.masked_eeg.reshape(-1,seq_length, 8)
         self.mask = self.mask.reshape(-1, seq_length, 8)
 
         #self.mask = 1 - self.mask  # Invert the mask
-        
+
     def __len__(self):
         return len(self.raw_eeg)
-    
+
     def __getitem__(self, idx):
         Y = self.raw_eeg_n[idx]
         X = self.masked_eeg[idx]
         M = self.mask[idx]
         return torch.from_numpy(X).float(), torch.from_numpy(Y).float(), torch.from_numpy(M).bool()
-    
+
 
 class MaskedDataset1(Dataset):
     def __init__(self, hdf5_file, normalize = None):
@@ -67,22 +67,22 @@ class MaskedDataset1(Dataset):
         elif normalize == 'min_max':
             self.raw_eeg_n = normalize_min_max(self.raw_eeg, self.raw_eeg)
             self.masked_eeg_n = normalize_min_max(self.raw_eeg, self.masked_eeg_n)
-        
+
         self.raw_eeg_n = self.raw_eeg_n.transpose(0,2,1)
         self.masked_eeg_n = self.masked_eeg_n.transpose(0,2,1)
         self.mask = self.mask.transpose(0,2,1)
-    
+
         self.mask = 1 - self.mask  # Invert the mask
-            
+
     def __len__(self):
         return len(self.raw_eeg)
-    
+
     def __getitem__(self, idx):
         Y = self.raw_eeg_n[idx]
         X = self.masked_eeg_n[idx]
         M = self.mask[idx]
         return torch.from_numpy(X).float(), torch.from_numpy(Y).float(), torch.from_numpy(M).bool()
-    
+
 def normalization1(signal, apply_signal, n_channels=8):
     eps = 1e-8
     means = signal.mean(axis=1, keepdims=True)
@@ -93,8 +93,8 @@ def normalization1(signal, apply_signal, n_channels=8):
 
 # def normalize_min_max(data):
 #     # Example min-max normalization
-#     return (data - np.min(data)) / (np.max(data) - np.min(data))    
-    
+#     return (data - np.min(data)) / (np.max(data) - np.min(data))
+
 class MaskedDataset2(Dataset):
     def __init__(self, hdf5_file, normalize = None):
         self.hdf5_file = hdf5_file
@@ -127,7 +127,7 @@ class MaskedDataset2(Dataset):
         mask = 1 - mask
 
         return torch.from_numpy(masked_eeg).float(), torch.from_numpy(raw_eeg_n).float(), torch.from_numpy(mask).bool()
-    
+
 
 class ERPDataset(Dataset):
     # must be numpy array of shape (n_samples, ts_steps) and (n_samples, 1)
@@ -141,7 +141,7 @@ class ERPDataset(Dataset):
         # self.erp_labels = self.erp_labels[:100000]
 
         hf.close()
-        eps = 1e-8 
+        eps = 1e-8
         for j in range(8):  # Assuming 8 channels
             means = self.features[:, :,j].mean(axis=1, keepdims=True)
             stds = self.features[:, :,j].std(axis=1, keepdims=True)
@@ -150,7 +150,7 @@ class ERPDataset(Dataset):
 
     def __len__(self):
         return len(self.features)
-    
+
     def __getitem__(self, idx):
         X = self.features[idx]
         Y = self.erp_labels[idx]
@@ -175,10 +175,10 @@ class EmotionDataset(Dataset):
             self.signals_n = self.signals.copy()
 
         self.signals_n = self.signals_n.reshape(-1, 1280, 8)
-        
+
     def __len__(self):
         return len(self.labels)
-    
+
     def __getitem__(self, idx):
         X = self.signals_n[idx]
         Y = self.labels[idx]
@@ -206,15 +206,15 @@ class StressDataset(Dataset):
 
     def __len__(self):
         return len(self.labels)
-    
+
     def __getitem__(self, idx):
         X = self.signals_n[idx]
         Y = self.labels[idx]
         return torch.from_numpy(X).float(), Y
-    
-    
-if __name__ == "__main__": 
-    # Load an ecg of masked dataset and plot mask and the ecg 
+
+
+if __name__ == "__main__":
+    # Load an ecg of masked dataset and plot mask and the ecg
     # parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
     # raw_csv = os.path.join(parent_dir, 'preprocess_data/tuh_signals_1s.csv')
     # masked_csv = os.path.join(parent_dir, 'preprocess_data/tuh_masked_signals_1s.csv')

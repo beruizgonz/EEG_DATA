@@ -33,6 +33,7 @@ def info_eeg_signal(file, channels_list):
             index = f.getSignalLabels().index(channel)  
             freqs.append(f.getSampleFrequency(index))  
             signals.append(f.readSignal(index))
+            print(f.getSignalHeaders())
 
         if len(set(freqs)) == 1:
             signals = np.array(signals)
@@ -43,8 +44,7 @@ def info_eeg_signal(file, channels_list):
         else:
             return False
 
-if __name__ == '__main__':
-
+def main(): 
     count = 0
     count2 = 0
     count3 = 0
@@ -74,12 +74,9 @@ if __name__ == '__main__':
 
                     count += 1
 
-    print(segments_10_seconds.shape)
-    save_csv(segments_10_seconds)
-    # print('Total segments:', total_segments)
+    # print(segments_10_seconds.shape)
+    # save_csv(segments_10_seconds)
 
 
-
-#  # Plot the first channel of the first sample
-#     plt.plot(segments_10_seconds[0][0])
-#     plt.show()
+if __name__ == '__main__':
+    main()
