@@ -10,12 +10,12 @@ import sys
 parent_dir = os.path.abspath(os.pardir)
 sys.path.append(parent_dir)
 
-from utils import bandpass_filter, downsample, divide_signal
+from utils import bandpass_filter, downsampled_signals, divide_signal
 
 seed_path = os.path.join(os.getcwd(), 'SEEDV')
-labels_file =  os.path.join(seed_path, 'Scores.xlsx')
+labels_file =  os.path.join(seed_path, 'information/Scores.xlsx')
 use_channels = ['FZ', 'CZ', 'PZ', 'P3', 'P4','PO7','PO8','OZ']
-ignore_file = 'Load_cnt_file_with_mne.ipynb'
+ignore_file = '7_1_20180411.cnt'
 
 start_second = [30, 353, 478, 674, 825, 908, 1200, 1346, 1451, 1711, 2055, 2307, 2457, 2726, 2888]
 end_second = [321, 418, 643, 764, 877, 1147, 1284, 1418, 1679, 1996, 2275, 2425, 2664, 2857, 3066]
@@ -63,6 +63,12 @@ def get_label(index, trial):
         label = trial_2_3[index]
     return label
 
+def label_stress(score):
+    if score >= 2:
+        return 1
+    else:
+        return 0
+
 def discard_seconds(number_seconds, freq, signals):
     return signals[:, int(number_seconds * freq):]
 
@@ -77,17 +83,18 @@ def get_eeg_data(file_path, start_second, end_second, use_channels, trial):
         score = get_score(labels_file, i, patient, trial)
         if score >=3 and trial == 1:    
             label = get_label(i, trial)
+            label = label_stress(label)
             index_start = int(start_second[i] * sfreq)
             index_end = int(end_second[i] * sfreq)
             data_trial = data[:, index_start:index_end]
             if data_trial.shape[1] == 0:
                 print('Error: Empty segment')
                 continue
-            data_trial = downsample(data_trial, sfreq, 128)
+            data_trial = downsampled_signals(data_trial, sfreq, 128)
             data_trial = bandpass_filter(data_trial, 0.5, 45, 128)
             data_trial = discard_seconds(60, 128, data_trial)
-            divided_signals = divide_signal(data_trial, 1280)
-            divided_signals = divided_signals.reshape(-1, 8, 1280)
+            divided_signals = divide_signal(data_trial, 128)
+            divided_signals = divided_signals.reshape(-1, 8, 128)
             for divided_signal in divided_signals:
                 all_divided_signals.append(divided_signal)
                 labels.append(label)
@@ -116,6 +123,7 @@ if __name__ == "__main__":
     labels_list = []  
     for root, dirs, files in os.walk(seed_path):
         for file in files:
+            print(file)
             if file.endswith('.cnt') and file != ignore_file:
                 file_path = os.path.join(root, file)
                 divide = file.split('_')
@@ -127,4 +135,4 @@ if __name__ == "__main__":
     
     print('Total segments:', len(joined_signals_list))
   
-    save_h5py(joined_signals_list, labels_list, 'seed_128.h5')
+    save_h5py(joined_signals_list, labels_list, 'seed_stress_1s_b1.h5')

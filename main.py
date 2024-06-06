@@ -9,8 +9,8 @@ import wandb
 from data.DataModules import SSLDataModule
 from data.Dataset import MaskedDataset, MaskedDataset1
 from models import SSL_EEG
-from models.decoders import MaskedDecoder, ERP_decoder
-from models.loss import MaskedMSELoss
+from modules.decoders import MaskedDecoder, ERP_decoder
+from modules.loss import MaskedMSELoss
 
 
 # DESCRIPTION:

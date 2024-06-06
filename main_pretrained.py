@@ -7,7 +7,7 @@ from pytorch_lightning.tuner import Tuner
 import wandb
 
 from data.DataModules import SSLDataModule
-from data.Dataset import MaskedDataset, MaskedDataset1, MaskedDataset2
+from data.Dataset import MaskedDataset
 from models import SSL_EEG
 from modules.decoders import MaskedDecoder, ERP_decoder
 from modules.loss import MaskedMSELoss
@@ -31,14 +31,14 @@ def main():
     #     batch_size=32,
     # )
 
-    eeg = os.path.join(os.getcwd(), 'data/TUEH-mask.h5')
-    masked_dataset = MaskedDataset2(hdf5_file=eeg, normalize='normalization')
+    eeg = os.path.join(os.getcwd(), 'data/UVA-mask.h5')
+    masked_dataset = MaskedDataset(hdf5_file=eeg)
     datamodule = SSLDataModule(dataset = masked_dataset,
         batch_size=32,
     )
 
-    encoder_args = {'feat_dim': 8, 'seq_len':512, 'd_model':64, 'n_heads': 8, 'num_layers': 1, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'BatchNorm'}
-    pretext = SSL_EEG(learning_rate=1e-3, encoder_args=encoder_args, decoder = MaskedDecoder, loss_fn=MaskedMSELoss())
+    encoder_args = {'feat_dim':8, 'seq_len':512, 'd_model':64, 'n_heads':8, 'num_layers':3, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'LayerNorm'}
+    pretext = SSL_EEG(learning_rate=1e-3, encoder_args=encoder_args, decoder = MaskedDecoder(d_model=64, feat_dim = 8), loss_fn=MaskedMSELoss())
 
     wandb_logger = WandbLogger(
         name="SSL EEG",
@@ -49,7 +49,7 @@ def main():
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         dirpath='./checkpoints/',
-        filename='SSL-1s',
+        filename='SSL-1s-{val_loss:.2f}-{epoch:02d}',
         save_top_k=1,
         mode='min',
     )

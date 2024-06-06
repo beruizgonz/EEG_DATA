@@ -13,7 +13,7 @@ from data.DataModules import ERPDataModule
 from models import SSL_EEG, EEG_ERP
 from modules.decoders import MaskedDecoder, ERP_decoder
 from modules.loss import MaskedMSELoss
-from modules.encoders import ConvNet, TSTransformerEncoder
+from modules.encoders import ConvNet, TSTransformerEncoder, Conv1DNet
 
 """
 This script is used to train the ERP detection model. 
@@ -36,18 +36,19 @@ target = np.array(hf.get("target"))
 matrix_dims = np.array(hf.get("matrix_dims"))
 hf.close()
 
-dataset = ERPDataset(dataset_path)
+dataset = ERPDataset(dataset_path, normalize='min_max')
 dm = ERPDataModule(dataset)
 
-ckpt = os.path.join('checkpoints', 'SSL-1s-v1.ckpt')
+ckpt = os.path.join('checkpoints', 'SSL-1s-val_loss=0.11-epoch=65.ckpt')
 
 # Load the model from the checkpoint
-model = SSL_EEG.load_from_checkpoint(ckpt, decoder = MaskedDecoder, loss_fn= MaskedMSELoss)
-model.eval()
+model = SSL_EEG.load_from_checkpoint(ckpt, decoder =  MaskedDecoder(d_model=64,feat_dim=8), loss_fn= MaskedMSELoss)
+
 
 conv = model.covnet
 # Load the encoder from the model
 encoder = model.encoder
+
 # Freeze the encoder
 for param in encoder.parameters():
     param.requires_grad = False
@@ -55,15 +56,15 @@ for param in encoder.parameters():
 for param in conv.parameters():
     param.requires_grad = False
 
-encoder_args = {'feat_dim': 8, 'seq_len':128, 'd_model':64, 'n_heads': 8, 'num_layers': 1, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'LayerNorm'}
+encoder_args = {'feat_dim': 8, 'seq_len':128, 'd_model':64, 'n_heads': 8, 'num_layers': 3, 'dim_feedforward': 256, 'dropout': 0.1, 'activation': 'gelu', 'norm': 'LayerNorm'}
 encoder1 = TSTransformerEncoder(**encoder_args)
-
-model_erp = EEG_ERP(learning_rate = 0.001,convnet = conv, encoder = encoder1, decoder = ERP_decoder(d_model = 64, ts_steps=128))
+conv1 = Conv1DNet()
+model_erp = EEG_ERP(learning_rate = 0.001, convnet = conv, encoder = encoder, decoder = ERP_decoder(d_model = 64, ts_steps=128))
 
 wandb_logger = WandbLogger(
     name="Classifier ERP",
     project="ERP detection",
-    log_model='all'
+    log_model= 'all'
 )
 
 # Initialize the checkpoint callback
@@ -73,6 +74,13 @@ checkpoint_callback = ModelCheckpoint(
     filename='Classifier-{epoch:02d}-{val_f1:.2f}',
     save_top_k=1,
     mode='max',
+)
+
+early_stop_callback = L.callbacks.EarlyStopping(
+    monitor='val_loss',
+    patience=10,
+    verbose=False,
+    mode='min'
 )
 
 # Initialize Gradient Accumulation Callback
@@ -87,7 +95,7 @@ trainer = Trainer(
     devices=1,
     precision="16-mixed",
     #accumulate_grad_batches=8,
-    callbacks=[checkpoint_callback],
+    callbacks=[checkpoint_callback, early_stop_callback],
     logger=wandb_logger
 )
 

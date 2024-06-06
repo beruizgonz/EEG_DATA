@@ -5,18 +5,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.constraints import max_norm
 from tensorflow import keras
 
-from tensorflow.keras import backend as K
-
-def f1_score(y_true, y_pred):
-    # Calculate Precision and Recall
-    precision = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))) / K.sum(K.round(K.clip(y_pred, 0, 1)) + K.epsilon())
-    recall = K.sum(K.round(K.clip(y_true * y_pred, 0, 1))) / K.sum(K.round(K.clip(y_true, 0, 1)) + K.epsilon())
-    
-    # Calculate F1 score
-    f1_val = 2 * (precision * recall) / (precision + recall + K.epsilon())
-    
-    return f1_val
-
 
 def EEGInception(input_time=1000, fs=128, ncha=8, filters_per_branch=8,
                  scales_time=(500, 250, 125), dropout_rate=0.25,
@@ -134,8 +122,8 @@ def EEGInception(input_time=1000, fs=128, ncha=8, filters_per_branch=8,
     model = keras.models.Model(inputs=input_layer, outputs=output_layer)
     optimizer = keras.optimizers.Adam(learning_rate=learning_rate, beta_1=0.9,
                                       beta_2=0.999, amsgrad=False)
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer,
-                  metrics=['accuracy', f1_score])
+    model.compile(loss='binary_crossentropy', optimizer=optimizer,
+                  metrics=['accuracy'])
     return model
 
 

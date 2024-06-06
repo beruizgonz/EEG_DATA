@@ -52,28 +52,42 @@ class Conv1DNet(nn.Module):
     def __init__(self):
         super(Conv1DNet, self).__init__()
         # First 1D convolutional layer
-        self.conv1 = nn.Conv1d(
-            in_channels=8, out_channels=32, kernel_size=16, padding = 'same')
-        # Max pooling layer after first convolutional layer
-        self.maxpool1 = nn.MaxPool1d(kernel_size=1)
-
+        self.dropout = 0.1
+        self.conv1 =  nn.Sequential(
+            nn.Conv1d(in_channels=8, out_channels=16, kernel_size=64, padding = 'same'),
+            # nn.BatchNorm1d(16),
+            nn.LayerNorm([16, 128]),
+            nn.ReLU(),
+            nn.Dropout(self.dropout)
+        )
         # Second 1D convolutional layer
-        self.conv2 = nn.Conv1d(
-            in_channels=32, out_channels=64, kernel_size=32, padding = 'same')
-        # Max pooling layer after second convolutional layer
-        self.maxpool2 = nn.MaxPool1d(kernel_size=1)
+        self.conv2 =  nn.Sequential(
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=32, padding = 'same'),
+            #nn.BatchNorm1d(32),
+            nn.LayerNorm([32, 128]),
+            nn.ReLU(),
+            nn.Dropout(self.dropout)
+        )
+
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=16, padding = 'same'),
+            #nn.BatchNorm1d(64),
+            nn.LayerNorm([64, 128]),
+            nn.ReLU(),
+            nn.Dropout(self.dropout)
+
+        )
 
     def forward(self, x):
         # x -> (N, C_{in}, L_{in}
         # Apply first convolution, ReLU activation function, and max pooling
         x  = x.permute(0,2,1)
-        x = self.maxpool1(nn.functional.relu(self.conv1(x)))
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
 
-        # Apply second convolution, ReLU activation function, and max pooling
-        x = self.maxpool2(nn.functional.relu(self.conv2(x)))
         return x
-
-    
+ 
 class TSTransformerEncoder(nn.Module):
 
     def __init__(self, feat_dim, seq_len, d_model, n_heads, num_layers, dim_feedforward, dropout=0.1,
@@ -84,7 +98,7 @@ class TSTransformerEncoder(nn.Module):
         self.d_model = d_model
         self.n_heads = n_heads
 
-        self.project_inp = nn.Linear(feat_dim, d_model)
+        #self.project_inp = nn.Linear(feat_dim, d_model)
         self.pos_enc = get_pos_encoder(pos_encoding)(d_model, dropout=dropout, max_len=seq_len)
 
         if norm == 'LayerNorm':
@@ -111,9 +125,11 @@ class TSTransformerEncoder(nn.Module):
             output: (batch_size, seq_length, feat_dim)
         """
         # permute because pytorch convention for transformers is [seq_length, batch_size, feat_dim]. padding_masks [batch_size, feat_dim]
-        inp = X.permute(2, 0, 1)  # (seq_length, batch_size, feat_dim
-
-        #inp = self.project_inp(inp) # * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        inp = X.permute(2, 0, 1)  # (seq_length, batch_size, feat_dim)
+     
+        #inp = self.project_inp(X) # * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        #print(inp.shape)
+        #inp = inp.permute(1, 0, 2)  # (batch_size, seq_length, d_model)
         inp = self.pos_enc(inp)  # add positional encoding
      
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer

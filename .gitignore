@@ -31,3 +31,13 @@ data/DEAP/s01.dat
 licenses/
 
 wandb/
+
+data/MAX/
+
+data/Simultaneous EEG-fMRI dataset/
+
+data/DENS/
+
+lightning_logs/
+
+EEGInception/model/

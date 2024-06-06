@@ -58,6 +58,18 @@ def downsample(signal, freq, new_freq):
     new_signal = resample(signal, new_n_samples, axis=1)
     return new_signal
 
+def downsampled_signals(signal, freq, new_freq):
+    n_samples, channels, time_points = signal.shape
+    new_n_time_points = int((time_points / freq) * new_freq)
+    
+    new_signal = np.zeros((n_samples, channels, new_n_time_points))
+    
+    for i in range(n_samples):
+        for j in range(channels):
+            new_signal[i, j, :] = resample(signal[i, j, :], new_n_time_points)
+    
+    return new_signal
+
 def  read_edf(data_path, channels):
     f = pyedflib.EdfReader(data_path)
     n = len(channels)
@@ -87,3 +99,16 @@ def convert_csv_h5(path_file):
     hf = h5py.File(path_file.replace('.csv', '.h5'), 'w')
     hf.create_dataset('data', data=data)
     hf.close()
+
+def z_score_normalization(data):
+    # Normalize the data per channel
+    for i in range(data.shape[1]):
+        data[:,i] = (data[:,i] - np.mean(data[:,i])) / np.std(data[:,i])
+    return (data - np.mean(data)) / np.std(data)
+
+def min_max_normalization(data):
+    # Normalize the data per channel
+    for i in range(data.shape[1]):
+        data[:,i] = (data[:,i] - np.min(data[:,i])) / (np.max(data[:,i]) - np.min(data[:,i]))
+    return data
+

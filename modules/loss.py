@@ -9,8 +9,8 @@ class MaskedMSELoss(nn.Module):
 
         super().__init__()
 
-        self.reduction = reduction
-        self.mse_loss = nn.MSELoss(reduction=self.reduction)
+        self.reduction = 'none'
+        self.mse_loss = nn.MSELoss()
 
     def forward(self,
                 y_pred: torch.Tensor, y_true: torch.Tensor, mask: torch.BoolTensor) -> torch.Tensor:
@@ -37,4 +37,4 @@ class MaskedMSELoss(nn.Module):
         non_masked_pred = torch.masked_select(y_pred, ~mask)
         non_masked_true = torch.masked_select(y_true, ~mask)
 
-        return 0.7*self.mse_loss(masked_pred, masked_true) +0.3*self.mse_loss(non_masked_pred, non_masked_true)
+        return self.mse_loss(masked_pred, masked_true)

@@ -31,7 +31,7 @@ def geom_noise_mask_single(L, lm, masking_ratio):
 
     return keep_mask
 
-def noise_mask(X, masking_ratio, lm=7, mode='separate', distribution='geometric', exclude_feats=None):
+def noise_mask(X, masking_ratio, lm=3, mode='separate', distribution='geometric', exclude_feats=None):
     """
     Creates a random boolean mask of the same shape as X, with 0s at places where a feature should be masked.
     Args:
@@ -84,8 +84,8 @@ def french_mask(sequence_length, mask_probability, mask_length, num_sequences=1)
     - A numpy array with the masked sequences. Shape is (num_sequences, sequence_length) for multiple sequences,
       or (sequence_length,) for a single sequence.
     """
+
     sequences = np.ones((num_sequences, sequence_length))
-    
     for seq_index in range(num_sequences):
         for i in range(sequence_length):
             if np.random.rand() < mask_probability:
@@ -115,42 +115,44 @@ if __name__ == '__main__':
     data_hf5 = os.path.join('data', 'UVA-DATASET', 'archive', 'GIB-UVA ERP-BCI.hdf5')
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
     parser = ArgumentParser()
-    parser.add_argument('--dataset_path', type=str, default=os.path.join(os.getcwd(), 'tuh_signals_4s.h5'), help='Path to the dataset')
-    parser.add_argument('--output_path', type=str, default=os.path.join(parent_dir,'data/TUEH-mask.h5'), help='Path to save the masked data')
+    parser.add_argument('--dataset_path', type=str, default=os.path.join(parent_dir, 'data/pretrain-data.h5'), help='Path to the dataset')
+    parser.add_argument('--output_path', type=str, default=os.path.join(parent_dir,'data/pretrain-mask.h5'), help='Path to save the masked data')
     parser.add_argument('--type_mask', type=str, default='noise', help='Type of mask to apply (noise, french)')
 
-    parser.add_argument('--masking_ratio', type=float, default=0.4, help='Masking ratio')
+    parser.add_argument('--masking_ratio', type=float, default=0.15, help='Masking ratio')
 
     parser.add_argument('--mask_probability', type=float, default=0.0325, help='Probability of applying the mask at each position')
-    parser.add_argument('--mask_length', type=int, default=3, help='Length of the mask to be applied')
-    parser.add_argument('--sequence_length', type=int, default=128, help='Length of each sequence')
+    parser.add_argument('--mask_length', type=int, default=20, help='Length of the mask to be applied')
+    parser.add_argument('--sequence_length', type=int, default=512, help='Length of each sequence')
     args = parser.parse_args()
  
     dataset_path = args.dataset_path
 
     # LOAD DATASET
     hf = h5py.File(dataset_path, 'r')
-    features = np.array(hf.get("data"))
+    features = np.array(hf.get("signals"))
     hf.close()
 
-    features = features.reshape(-1, 8, 512)
-    features = features.transpose(0,2,1)
+    # features = features.transpose(1,0,2)
+    # features = features.transpose(0,2,1)
+    print(features.shape)
    
     if args.type_mask == 'noise':
         # Apply the mask to all the samples
         mask = np.array([noise_mask(sample,args.masking_ratio) for sample in features])
         masked_data = np.array([apply_mask(sample, mask) for sample, mask in zip(features, mask)])
     elif args.type_mask == 'french':
-        features = features.transpose(0,2,1)
-        print(features.shape)
+        # features = features.transpose(0,2,1)
+        # print(features.shape)
         mask= np.array([french_mask(args.sequence_length, args.mask_probability, args.mask_length, num_sequences=features.shape[1]) for sample in features])
-        masked_data = np.array([apply_mask(sample, 1-mask) for sample, mask in zip(features, mask)])
+        masked_data = np.array([apply_mask(sample, mask) for sample, mask in zip(features, mask)])
 
-    data = features.transpose(0,2,1)
-    masked_data = masked_data.transpose(0,2,1)
-    mask = mask.transpose(0,2,1)
+    # data = features.transpose(0,2,1)
     # masked_data = masked_data.transpose(0,2,1)
+    # mask = mask.transpose(0,2,1)
+    #masked_data = masked_data.transpose(0,2,1)
     # Save the mask, masked data and the reshaped data in hdf5 format
+    data = features
     hf = h5py.File(args.output_path, 'w')
     hf.create_dataset('masked', data=masked_data)
     hf.create_dataset('mask', data=mask)

@@ -49,7 +49,7 @@ class EEGInceptionBlock2(nn.Module):
 
 
 class EEGInception(nn.Module):
-    def __init__(self, input_time=1000, fs=128, ncha=8, filters_per_branch=8, scales_time=(500, 250, 125), dropout_rate=0.25, activation='ELU', n_classes=2, learning_rate=0.001):
+    def __init__(self, input_time=4000, fs=128, ncha=8, filters_per_branch=8, scales_time=(500, 250, 125), dropout_rate=0.25, activation='ELU', n_classes=2, learning_rate=0.001):
         super(EEGInception, self).__init__()
         input_samples = int(input_time * fs / 1000)
         scales_samples = [int(s * fs/ 1000) for s in scales_time]
@@ -79,9 +79,8 @@ class EEGInception(nn.Module):
     def forward(self, x):
         
         x = self.block1(x)
-
         x = self.avgpool1(x)
-  
+        
         x = self.block2(x)
         x = self.avgpool2(x)
 
@@ -90,16 +89,15 @@ class EEGInception(nn.Module):
         x = self.activation3_1(x)
         x = self.avgpool3_1(x)
         x = self.dropout3_1(x)
-    
+
         x = self.conv3_2(x)
         x = self.bn3_2(x)
         x = self.activation3_2(x)
         x = self.avgpool3_2(x)
         x = self.dropout3_2(x)
-   
+
         x = self.flatten(x)
         x = self.fc(x)
         # x = self.sigmoid(x)
         x = x.squeeze(-1)
         return x
-    

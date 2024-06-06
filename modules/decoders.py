@@ -15,7 +15,7 @@ class MaskedDecoder(nn.modules.Module):
         self.linear2 = nn.Linear(d_model // 2, feat_dim)
         self.bn1 = nn.BatchNorm1d(d_model // 2)
         self.bn2 = nn.BatchNorm1d(1)	
-       # self.output_layer = nn.Linear(d_model, feat_dim)
+        self.output_layer = nn.Linear(d_model, feat_dim)
 
 
     def forward(self, x):
@@ -23,42 +23,38 @@ class MaskedDecoder(nn.modules.Module):
         #print(x.shape)
         #x = x.permute(1, 0, 2) # [seq_len, batch_size, d_model]
         #print(x.shape)
-        x = self.linear1(x)
-        #x = x.permute(1, 2, 0)  # [batch_size, d_model // 2, seq_len]
-        #x = self.bn1(x)
-        #x = x.permute(2, 0, 1)
-        x = self.relu(x)
-        x = self.linear2(x)
+        # x = self.linear1(x)
+        # x = self.bn1(x)
+        # x = self.relu(x)
+        # x = self.linear2(x)
+        # x = self.bn2(x)
         #x = x.permute(1, 0, 2)
-        #x = self.output_layer(x)
+        x = self.output_layer(x)
         return x # [seq_len, batch_size]
 
-class ERP_decoder(nn.Module): 
-    """
-    This class defines the decoder of the ERP model. It takes the output of the encoder and returns the prediction.
-    """
-    def __init__(self, d_model, ts_steps, dropout=0.2):
-        super(ERP_decoder, self).__init__()
+class ERP_decoder(nn.modules.Module):
+    def __init__(self,ts_steps, d_model, dropout = 0.1):
+        super().__init__()
         self.linear = nn.Linear(d_model, 1)
         self.linear2 = nn.Linear(ts_steps,1)
-        self.relu1 = nn.ReLU()
+        self.relu1 = nn.GELU()
         self.bn1 = nn.BatchNorm1d(ts_steps)
         self.bn2 = nn.BatchNorm1d(1)
-        self.dropout = nn.Dropout(dropout)
-        self.sigmoid = nn.Sigmoid()
+        self.dropout1 = nn.Dropout(dropout)
+        
     def forward(self, x):
         # We describe the size of the tensors in each step
         # (batch_size, ts_steps, d_model)
+
         x = self.linear(x) # (batch_size, ts_steps, 1)
-        x = self.bn1(x) # (batch_size, ts_steps, 1)
-        x= x.squeeze(-1) # (batch_size, ts_steps)
+        x = x.squeeze(-1) # (batch_size, ts_steps)
+        x = self.bn1(x) 
         x = self.relu1(x) # (batch_size, ts_steps)
-        x = self.dropout(x)
+        x = self.dropout1(x) # apply dropout
         x = self.linear2(x) # (batch_size, 1)
         x = self.bn2(x)
         x = x.squeeze(-1) # (batch_size)
-        #x = self.sigmoid(x)
-        return x
+        return x 
     
 class Emotion_decoder(nn.Module): 
     """
@@ -71,6 +67,29 @@ class Emotion_decoder(nn.Module):
         self.relu1 = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(ts_steps)
         self.bn2 = nn.BatchNorm1d(n_emotions)
+        self.dropout1 = nn.Dropout(dropout)
+    
+    def forward(self, x):
+        # We describe the size of the tensors in each step
+        # (batch_size, ts_steps, d_model)
+        x = self.linear(x)
+        x = x.squeeze(-1)
+        x = self.relu1(x)
+        x = self.dropout1(x)
+        x = self.linear2(x)
+        return x
+    
+class ValenceArousal_decoder(nn.Module): 
+    """
+    This class defines the decoder of the Valence_Arousal model. It takes the output of the encoder and returns the prediction.
+    """
+    def __init__(self, d_model,ts_steps, dropout=0.1):
+        super(ValenceArousal_decoder, self).__init__()
+        self.linear = nn.Linear(d_model, 1)
+        self.linear2 = nn.Linear(ts_steps,2)
+        self.relu1 = nn.ReLU()
+        self.bn1 = nn.BatchNorm1d(ts_steps)
+        self.bn2 = nn.BatchNorm1d(2)
         self.dropout1 = nn.Dropout(dropout)
     
     def forward(self, x):

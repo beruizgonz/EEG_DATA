@@ -1,9 +1,10 @@
 import math
 import os
 import torch 
+import numpy as np
 from dotenv import load_dotenv
-from torch.utils.data import DataLoader, random_split, Dataset
-from .Dataset import MaskedDataset
+from torch.utils.data import DataLoader, random_split, Dataset, Subset
+from .Dataset import MaskedDataset, StressDataset
 
 import pytorch_lightning as L
 from typing import List
@@ -29,7 +30,7 @@ class SSLDataModule(L.LightningDataModule):
     def prepare_data(self, seed : int = 42):
         length = len(self.dataset)
         print(f"The length of the dataset is: {length}")
-        train_split = math.ceil(length * 0.6)  # rounds up
+        train_split = math.ceil(length * 0.7)  # rounds up
         test_split = int(length * 0.2)  # rounds down
         val_split = length - train_split - test_split
         self.train_dataset, self. val_dataset, self.test_dataset = random_split(
@@ -44,39 +45,43 @@ class SSLDataModule(L.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
 
-
-if __name__ == "__main__":
-    parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-    raw_csv = os.path.join(parent_dir, 'reshaped_signals.csv')
-    masked_csv = os.path.join(parent_dir, 'masked_signals.csv')
-    mask_csv = os.path.join(parent_dir, 'mask.csv')
-
-    dataset = MaskedDataset(raw_csv, masked_csv, mask_csv)
-    dm = SSLDataModule(dataset)
-    dm.prepare_data()
-    print(dm.train_dataloader())
-    print(dm.val_dataloader())
-    print(len(dm.train_dataloader()))
-
 class ERPDataModule(L.LightningDataModule):
     def __init__(self, dataset: Dataset, batch_size: int = 32):
         super().__init__()
         self.batch_size = batch_size
         self.dataset = dataset
-
         self.num_workers = multiprocessing.cpu_count()  # maximum number of workers
 
-    def prepare_data(self, seed : int = 42):
+    def setup(self, stage=None, seed: int = 42):
+        # np.random.seed(seed)
+        # unique_subjects = np.unique(self.dataset.subjects)
+        # np.random.shuffle(unique_subjects)
+
+        # num_subjects = len(unique_subjects)
+        # train_size = math.ceil(num_subjects * 0.7)  # rounds up
+        # val_size = int(num_subjects * 0.2)  # rounds down
+        # test_size = num_subjects - train_size - val_size
+
+        # train_subjects = unique_subjects[:train_size]
+        # val_subjects = unique_subjects[train_size:train_size + val_size]
+        # test_subjects = unique_subjects[train_size + val_size:]
+
+        # train_indices = np.where(np.isin(self.dataset.subjects, train_subjects))[0]
+        # val_indices = np.where(np.isin(self.dataset.subjects, val_subjects))[0]
+        # test_indices = np.where(np.isin(self.dataset.subjects, test_subjects))[0]
+
+        # self.train_dataset = Subset(self.dataset, train_indices)
+        # self.val_dataset = Subset(self.dataset, val_indices)
+        # self.test_dataset = Subset(self.dataset, test_indices)
         length = len(self.dataset)
-        print(f"The length of the dataset is: {length}")
-        train_split = math.ceil(length * 0.6)  # rounds up
-        val_split = int(length * 0.2)  # rounds down
-        test_split = length - train_split- val_split
-        # self.train_dataset = Subset(self.dataset, range(train_split))
-        # self.val_dataset = Subset(self.dataset, range(train_split, length))
-        
-        self.train_dataset, self.val_dataset, self.test_dataset = random_split(self.dataset, [train_split, val_split, test_split], generator=torch.Generator().manual_seed(seed))
-        
+        train_split = math.ceil(length * 0.7)  # rounds up
+        test_split = int(length * 0.2)  # rounds down
+        val_split = length - train_split - test_split
+        self.train_dataset, self. val_dataset, self.test_dataset = random_split(
+            self.dataset, [train_split, val_split, test_split], generator=torch.Generator().manual_seed(seed))
+
+        print(f"Train: {len(self.train_dataset)} Val: {len(self.val_dataset)} Test: {len(self.test_dataset)}")
+
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
 
@@ -85,3 +90,11 @@ class ERPDataModule(L.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
+    
+if __name__ == "__main__":
+        parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+        stress_data = os.path.join(os.getcwd(), 'deap_stress_4s_subject.h5')
+        dataset = StressDataset(stress_data)
+        dm = ERPDataModule(dataset)
+        dm.setup(seed=42)
+        
