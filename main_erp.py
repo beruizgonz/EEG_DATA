@@ -36,10 +36,10 @@ target = np.array(hf.get("target"))
 matrix_dims = np.array(hf.get("matrix_dims"))
 hf.close()
 
-dataset = ERPDataset(dataset_path, normalize='min_max')
+dataset = ERPDataset(dataset_path, normalize='normalization')
 dm = ERPDataModule(dataset)
 
-ckpt = os.path.join('checkpoints', 'SSL-1s-val_loss=0.11-epoch=65.ckpt')
+ckpt = os.path.join('checkpoints', 'SSL-1s-val_loss=0.08-epoch=89.ckpt')
 
 # Load the model from the checkpoint
 model = SSL_EEG.load_from_checkpoint(ckpt, decoder =  MaskedDecoder(d_model=64,feat_dim=8), loss_fn= MaskedMSELoss)
@@ -50,8 +50,8 @@ conv = model.covnet
 encoder = model.encoder
 
 # Freeze the encoder
-for param in encoder.parameters():
-    param.requires_grad = False
+# for param in encoder.parameters():
+#     param.requires_grad = False
 
 for param in conv.parameters():
     param.requires_grad = False

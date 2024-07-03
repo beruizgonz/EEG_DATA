@@ -13,6 +13,8 @@ deap_folder = os.path.join(os.getcwd(), 'DEAP')
 
 # Parameters
 channels = [19,24,16,11,29,14,32,15]
+channels1 = [19,24,16,15]
+channels2 =[24]
 
 def get_data_subject(subject): 
     """
@@ -39,19 +41,6 @@ def divide_signal(signal, seg_length):
     segmented_signal = signal.reshape(trials* n_segments, channels, seg_length)
     return segmented_signal
 
-def join_data(): 
-    """
-    Join the data for all the subjects
-    """
-    data = []
-    for i in range(1, 33):
-        subject_data = get_data_subject(i)
-        s_data = subject_data['data'][:,:,:7680]
-        signals = filter_data_channels(s_data, channels)
-        divided = divide_signal(signals, 128)
-        data.append(divided)
-    return np.concatenate(data, axis=0)
-
 def valence_arousal(subject):
     """
     Get valence and arousal labels for a single subject
@@ -76,6 +65,7 @@ def define_stress_labels(subject):
     # Get the indices of the stress and calm labels
     stress_indices = np.where(stress == 1)[0]
     calm_indices = np.where(calm == 1)[0]
+    print(stress_indices+1, calm_indices+1)
     return stress_indices, calm_indices
 
 def get_stress_data1(base_folder, num_subjects=32):
@@ -85,14 +75,18 @@ def get_stress_data1(base_folder, num_subjects=32):
         try:
             data = get_data_subject(i)  # Assuming function adapted for path
             data = data['data'][:,:, 384:]
-            signals = filter_data_channels(data, channels)
+            #signals = data
+            signals = filter_data_channels(data, channels1)
             #signals = downsampled_signals(signals, 256, 128)
-            #signals = bandpass_filter(signals, 0.5, 45, 128)
+            #signals = bandpass_filter(signals, 4, 45, 128)
             stress_indices, calm_indices = define_stress_labels(i)
+            if len(stress_indices) == 0 or len(calm_indices) == 0:
+                print(f"Skipping subject {i} due to lack of indices")
+                continue
             stress_data = signals[stress_indices]
             calm_data = signals[calm_indices]
-            stress_divided = divide_signal(stress_data, 128)
-            calm_divided = divide_signal(calm_data, 128)
+            stress_divided = divide_signal(stress_data, 512)
+            calm_divided = divide_signal(calm_data, 512)
             stress_total[i] = stress_divided
             calm_total[i] = calm_divided
         except Exception as e:
@@ -107,9 +101,11 @@ def join_data_and_labels(dict_calm, dict_stress):
     combined_data = []
     combined_labels = []
     subject_ids = []
-    for subject_id in dict_calm:
+    print(dict_calm.keys(), dict_stress.keys())
+    for subject_id in dict_calm.keys():
 
         calm_data = dict_calm[subject_id]
+        print(calm_data.shape, len(calm_data))
         stress_data = dict_stress[subject_id]
 
         combined_data.append(calm_data)
@@ -121,7 +117,7 @@ def join_data_and_labels(dict_calm, dict_stress):
         combined_labels.append(calm_labels)
         combined_labels.append(stress_labels)
 
-        subject_ids.append(np.full(len(calm_data), subject_id))
+        #subject_ids.append(np.full(len(calm_data), subject_id))
         subject_ids.append(np.full(len(stress_data), subject_id))
 
     # Concatenate all subject data, labels, and subject IDs into single arrays
@@ -140,33 +136,25 @@ def valence_arousal_data(folder):
     combined_data = []
     for i in range(1, 33):
         data = get_data_subject(i)
-        data = data['data'][:,:,:7680]
-        signals = filter_data_channels(data, channels)
+        data = data['data'][:,:,384:]
+        signals = filter_data_channels(data, channels1)
         valence, arousal = valence_arousal(i)
         divided = divide_signal(signals, 512)
         
-    #     valence_total.append(np.repeat(valence, divided.shape[0]//valence.shape[0]))
-    #     arousal_total.append(np.repeat(arousal, divided.shape[0]//arousal.shape[0]))
-    #     combined_data.append(divided)
+        valence_total.append(np.repeat(valence, divided.shape[0]//valence.shape[0]))
+        arousal_total.append(np.repeat(arousal, divided.shape[0]//arousal.shape[0]))
+        combined_data.append(divided)
 
-    # valence_total = np.concatenate(valence_total, axis=0)
-    # arousal_total = np.concatenate(arousal_total, axis=0)
-    # divided = np.concatenate(combined_data, axis=0)
-    # print(valence_total.shape)
-    # print(arousal_total.shape)
-    # print(divided.shape)
-    # with h5py.File('deap_valence_arousal1.h5', 'w') as hf:
-    #     hf.create_dataset("valence", data=valence_total)
-    #     hf.create_dataset("arousal", data=arousal_total)
-    #     hf.create_dataset("signals", data=divided)
-
-def join_labels(calm, stress):
-    """
-    Join the labels for the calm and stress data
-    """
-    calm_labels = np.zeros(calm.shape[0])
-    stress_labels = np.ones(stress.shape[0])
-    return np.concatenate([calm_labels, stress_labels], axis=0)
+    valence_total = np.concatenate(valence_total, axis=0)
+    arousal_total = np.concatenate(arousal_total, axis=0)
+    divided = np.concatenate(combined_data, axis=0)
+    print(valence_total.shape)
+    print(arousal_total.shape)
+    print(divided.shape)
+    with h5py.File('deap_valence_arousal1.h5', 'w') as hf:
+        hf.create_dataset("valence", data=valence_total)
+        hf.create_dataset("arousal", data=arousal_total)
+        hf.create_dataset("signals", data=divided)
 
 if __name__ == '__main__':
     # data = filter_data_channels(get_data_subject(1)['data'][:,:,:7680], channels)
@@ -180,10 +168,10 @@ if __name__ == '__main__':
     # print('Data saved')
     stress, calm = get_stress_data1(deap_folder)
     data, labels, subjects = join_data_and_labels(calm, stress)
-    with h5py.File('deap_stress_1s_subject.h5', 'w') as hf:
+    with h5py.File('deap_stress_4s_4channel.h5', 'w') as hf:
         hf.create_dataset("signals", data=data)
         hf.create_dataset("labels", data=labels)
-        hf.create_dataset("subject", data =subjects)
+        hf.create_dataset("subject", data=subjects)
     # # subject = 's01'
     # data = get_data_subject(1)
     # # Get the data

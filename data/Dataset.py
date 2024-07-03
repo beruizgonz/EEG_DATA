@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 sys.path.append(os.path.abspath(os.pardir))
 
-from utils import plot_masked_data, normalization
+from utils import plot_masked_data, normalization, padding_mask
 
 def normalization1(signal, apply_signal, n_channels=8):
     eps = 1e-8
@@ -20,11 +20,11 @@ def normalization1(signal, apply_signal, n_channels=8):
     return apply_signal
 
 
-def normalize_min_max(data,apply_signal, n_channels=8):
+def normalize_min_max(data,apply_signal, n_channels=1):
     # Normalize the signal using Min-Max normalization
     for j in range(n_channels):
-        mins = data[:,j].min(axis=0, keepdims=True)
-        maxs = data[:,j].max(axis=0, keepdims=True)
+        mins = data[:,j].min(axis=1, keepdims=True)
+        maxs = data[:,j].max(axis=1, keepdims=True)
         apply_signal[:,j] = (apply_signal[:,j] - mins) / (maxs - mins)
     return apply_signal
 
@@ -64,7 +64,7 @@ class MaskedDataset(Dataset):
        
         raw_eeg_n= raw_eeg_n.transpose(1, 0)
         masked_eeg = masked_eeg.transpose(1, 0)
-        mask = mask.transpose(1, 0)
+        mask = mask.transpose(1,0)
         # Invert the mask
         mask = 1 - mask
 
@@ -157,7 +157,7 @@ class StressDataset(Dataset):
         X = raw_eeg_n.transpose(1, 0)
         Y = labels
         return torch.from_numpy(X).float(), np.float32(Y)
-
+    
 
 class Valence_Arousal(Dataset):
     def __init__(self, data_path, normalize = None):
@@ -167,7 +167,6 @@ class Valence_Arousal(Dataset):
            self.arousal = np.array(hf.get("arousal"))
         hf.close()
         self.signals_n = self.signals.copy()
-
         if normalize == 'normalization':
             self.signals_n = normalization1(self.signals, self.signals_n)
         elif normalize == 'min_max':
@@ -180,37 +179,45 @@ class Valence_Arousal(Dataset):
     
     def __getitem__(self, idx):
         X = self.signals_n[idx].transpose(1,0)
-        Y = np.array([self.valence[idx], self.arousal[idx]])
-        return torch.from_numpy(X).float(), torch.from_numpy(Y).float()
+        Y = self.valence[idx]
+        return torch.from_numpy(X).float(), Y.astype(np.float32)
 
 if __name__ == "__main__":
     # Load an ecg of masked dataset and plot mask and the ecg
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
     path_mask = os.path.join(parent_dir, 'preprocess_data/deap_mask.hdf5')
-    path_lemon = os.path.join(parent_dir, 'data/LEMON-mask-1s.h5')
-    dataset1 = MaskedDataset(path_lemon, normalize='min_max')
+    path_lemon = os.path.join(parent_dir, 'data/LEMON-mask-4s-8channel.h5')
+    path_stress = os.path.join(parent_dir, 'data/deap_stress_4s_8channel.h5')
+    
+    path_uva_mask = os.path.join(parent_dir, 'data/UVA-mask.h5')
+    dataset1 = MaskedDataset(path_lemon, normalize=None)
+    print(dataset1[0][0].shape)
     sample1 = dataset1[0]
 
-    dataset2 = StressDataset('deap_stress_1s_subject.h5')
+    dataset2 = StressDataset(path_stress, normalize = 'normalization')
     sample2 = dataset2[0]
 
-    dataset3 = MaskedDataset(path_lemon, normalize='normalization') 
+    dataset3 = MaskedDataset(path_lemon, normalize='normalization')
     sample3 = dataset3[0]
     
     dataset4 = ERPDataset('./UVA-DATASET/archive/GIB-UVA ERP-BCI.hdf5', normalize='normalization')
     sample4 = dataset4[18]
 
-    dataset5 = ERPDataset('./UVA-DATASET/archive/GIB-UVA ERP-BCI.hdf5')
-    sample5 = dataset5[18]
+    # dataset5 = ERPDataset('./UVA-DATASET/archive/GIB-UVA ERP-BCI.hdf5', normalize='min_max')
+    # sample5 = dataset5[18]
 
-    print(sample4[0].shape)
-    print(sample1[0].shape)
+    dataset6 = StressDataset(path_stress)
+    sample6 = dataset6[0]
 
+    print(sample3[0].shape)
+    # Print the type of the values of the sample
+    print(sample1[0].dtype, sample1[1].dtype, sample1[2].dtype)
+    
     # Plot the data
     fig, ax1 = plt.subplots()
 
     # Plot the first signal on the primary y-axis
-    ax1.plot(sample4[0][:128, 0], 'b-', label='Signal 1')
+    ax1.plot(sample2[0][:,6], 'b-', label='Signal 1')
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Signal 1 (blue)', color='b')
     ax1.tick_params('y', colors='b')
@@ -218,7 +225,7 @@ if __name__ == "__main__":
     # Create a secondary y-axis sharing the same x-axis
     ax2 = ax1.twinx()
     # Plot the second signal on the secondary y-axis
-    ax2.plot(sample5[0][:128, 0], 'r-', label='Signal 2')
+    ax2.plot(sample6[0][:,6], 'r-', label='Signal 2')
     ax2.set_ylabel('Signal 2 (red)', color='r')
     ax2.tick_params('y', colors='r')
 
@@ -231,3 +238,5 @@ if __name__ == "__main__":
 
     # Show the plot
     plt.show()
+
+    print(len(dataset1))

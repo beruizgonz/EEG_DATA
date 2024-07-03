@@ -11,11 +11,13 @@ sys.path.append(os.path.abspath(os.pardir))
 from utils import bandpass_filter, downsample, divide_signal
 
 # Path to the folder containing the EEG and VMRK files
-data_path = os.path.join(os.getcwd(), 'MAX')
+data_path = os.path.join(os.getcwd(), 'LEMON')
 subject_path = os.path.join(data_path, 'sub-032306/RSEEG')
 vhdr_file = os.path.join(subject_path, 'sub-032306.vhdr')
 
 interest_channels = ['Fz', 'Cz', 'Pz', 'P3', 'P4', 'PO7', 'PO8', 'Oz']
+interest_channels1 = ['Fz', 'Cz', 'Pz', 'Oz']
+interest_channels2 = ['Cz']
 
 def change_vmrkeeg_marker_file(vhdr_file_path, new_marker_file_name):
     name_file = os.path.basename(vhdr_file_path).split('.')[0]
@@ -67,8 +69,8 @@ def prepare_data(raw):
     raw_np1 = raw.get_data()
     raw_np = downsample_eeg_data(raw, 128)
     raw_np = raw.get_data()
-    raw_filtered = bandpass_filter(raw_np, 0.5, 45, 128)
-    divided_signals = divide_signal(raw_filtered, 128)
+    raw_filtered = bandpass_filter(raw_np, 4, 45, 128)
+    divided_signals = divide_signal(raw_filtered, 512)
     return divided_signals
 
 def main(folder):
@@ -90,7 +92,6 @@ def main(folder):
     return np.concatenate(all_divided_signals, axis=1)
             
 
-
 if __name__ == '__main__':
     # change_vmrkeeg_marker_file(vhdr_file, 'sub-032306_new.vhdr')
     # lemon_eeg_folder(data_path)
@@ -103,5 +104,5 @@ if __name__ == '__main__':
     # # plt.show()
     all_lemon = main(data_path)
     print(all_lemon.shape)
-    with h5py.File('all_lemon_4s.h5', 'w') as hf:
+    with h5py.File('all_lemon_4s_8channel.h5', 'w') as hf:
         hf.create_dataset("data", data=all_lemon)

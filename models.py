@@ -44,7 +44,7 @@ class SSL_EEG(LightningModule):
             norm=encoder_args["norm"]
         )
 
-        #self.covnet = EEGInceptionBlock1(in_channels = 1, ncha=8, filters_per_branch=8, scales_samples=(500, 250, 125), dropout_rate=0.25, activation='ELU')
+        #self.covnet = EEGInceptionBlock1(in_channels = 1, ncha=8, filters_per_branch=16, scales_samples=(500, 250, 125), dropout_rate=0.25, activation='ELU')
         self.covnet = Conv1DNet()
         self.decoder = decoder
         self.loss_fn = loss_fn
@@ -57,7 +57,7 @@ class SSL_EEG(LightningModule):
         
         x = self.covnet(x)
 
-        # x = x.squeeze(-1)
+        #x = x.squeeze(-1)
         x, attn = self.encoder(x)
         x = self.decoder(x)
         return x, attn
@@ -275,7 +275,7 @@ class EEGInceptionPL(LightningModule):
         return self.shared_step(batch, "val") 
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
+        optimizer = optim.Adam(self.parameters(), lr=self.learning_rate, betas = (0.9, 0.999))
         return optimizer
 
     def train_dataloader(self):

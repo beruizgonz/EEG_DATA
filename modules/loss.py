@@ -32,9 +32,8 @@ class MaskedMSELoss(nn.Module):
         # for this particular loss, one may also elementwise multiply y_pred and y_true with the inverted mask
         masked_pred = torch.masked_select(y_pred, mask)
         masked_true = torch.masked_select(y_true, mask)
-
         # Select only the non-masked values
         non_masked_pred = torch.masked_select(y_pred, ~mask)
         non_masked_true = torch.masked_select(y_true, ~mask)
 
-        return self.mse_loss(masked_pred, masked_true)
+        return self.mse_loss(masked_pred, masked_true) 

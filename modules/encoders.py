@@ -54,28 +54,27 @@ class Conv1DNet(nn.Module):
         # First 1D convolutional layer
         self.dropout = 0.1
         self.conv1 =  nn.Sequential(
-            nn.Conv1d(in_channels=8, out_channels=16, kernel_size=64, padding = 'same'),
-            # nn.BatchNorm1d(16),
-            nn.LayerNorm([16, 128]),
+            nn.Conv1d(in_channels=8, out_channels=16, kernel_size=64, stride = 1, padding = 'same'),
+            #nn.BatchNorm1d(16),
+            nn.LayerNorm([16, 512]),
             nn.ReLU(),
             nn.Dropout(self.dropout)
         )
-        # Second 1D convolutional layer
+        # # Second 1D convolutional layer
         self.conv2 =  nn.Sequential(
-            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=32, padding = 'same'),
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=32, stride = 1, padding = 'same'),
             #nn.BatchNorm1d(32),
-            nn.LayerNorm([32, 128]),
+            nn.LayerNorm([32, 512]),
             nn.ReLU(),
             nn.Dropout(self.dropout)
         )
 
         self.conv3 = nn.Sequential(
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=16, padding = 'same'),
+            nn.Conv1d(in_channels=32, out_channels=128, kernel_size=16, stride =1,  padding = 'same'),
             #nn.BatchNorm1d(64),
-            nn.LayerNorm([64, 128]),
+            nn.LayerNorm([128, 512]),
             nn.ReLU(),
             nn.Dropout(self.dropout)
-
         )
 
     def forward(self, x):
@@ -108,7 +107,7 @@ class TSTransformerEncoder(nn.Module):
 
         self.transformer_encoder = TransformerEncoder(encoder_layer, num_layers)
 
-        self.output_layer = nn.Linear(d_model, feat_dim)
+        #self.output_layer = nn.Linear(d_model, feat_dim)
 
         self.act = _get_activation_fn(activation)
 
@@ -125,19 +124,17 @@ class TSTransformerEncoder(nn.Module):
             output: (batch_size, seq_length, feat_dim)
         """
         # permute because pytorch convention for transformers is [seq_length, batch_size, feat_dim]. padding_masks [batch_size, feat_dim]
-        inp = X.permute(2, 0, 1)  # (seq_length, batch_size, feat_dim)
-     
-        #inp = self.project_inp(X) # * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
-        #print(inp.shape)
-        #inp = inp.permute(1, 0, 2)  # (batch_size, seq_length, d_model)
+        inp = X.permute(2,0,1)  # (seq_length, batch_size, feat_dim)
+        #inp = self.project_inp(inp) * math.sqrt(self.d_model)  # [seq_length, batch_size, d_model] project input vectors to d_model dimensional space
+        #inp = inp.permute(0,2,1)  # (batch_size, seq_length, d_model)
         inp = self.pos_enc(inp)  # add positional encoding
-     
         # NOTE: logic for padding masks is reversed to comply with definition in MultiHeadAttention, TransformerEncoderLayer
         output, attn  = self.transformer_encoder(inp)  # (seq_length, batch_size, d_model)
-        #output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
-        output = output.permute(1, 0, 2)  # (batch_size, seq_length, d_model)
+        output = self.act(output)  # the output transformer encoder/decoder embeddings don't include non-linearity
+        output = output.permute(1,0,2)  # (batch_size, seq_length, d_model)
         #output = self.dropout1(output)
         # Most probably defining a Linear(d_model,feat_dim) vectorizes the operation over (seq_length, batch_size).
         #output = self.output_layer(output)  # (batch_size, seq_length, feat_dim)
         return output, attn
+    
 

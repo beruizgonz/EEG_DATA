@@ -3,18 +3,18 @@ import torch
 
 class MaskedDecoder(nn.modules.Module):
     """
-    The FCN used to predict the masked values consists of a single linear layer of size 
-    dmodel/2 = 128 followed by a ReLU activation function. 
-    An additional linear layer is used to project the output vector to a single value, 
+    The FCN used to predict the masked values consists of a single linear layer of size
+    dmodel/2 = 128 followed by a ReLU activation function.
+    An additional linear layer is used to project the output vector to a single value,
     which corresponds to the predicted value of a masked point
     """
     def __init__(self, d_model, feat_dim):
         super(MaskedDecoder, self).__init__()
-        self.linear1 = nn.Linear(d_model, d_model // 2)
-        self.relu = nn.ReLU()
-        self.linear2 = nn.Linear(d_model // 2, feat_dim)
-        self.bn1 = nn.BatchNorm1d(d_model // 2)
-        self.bn2 = nn.BatchNorm1d(1)	
+        # self.linear1 = nn.Linear(d_model, d_model // 2)
+        # self.relu = nn.ReLU()
+        # self.linear2 = nn.Linear(d_model // 2, feat_dim)
+        # self.bn1 = nn.BatchNorm1d(32)
+        # self.bn2 = nn.BatchNorm1d(32)
         self.output_layer = nn.Linear(d_model, feat_dim)
 
 
@@ -24,39 +24,48 @@ class MaskedDecoder(nn.modules.Module):
         #x = x.permute(1, 0, 2) # [seq_len, batch_size, d_model]
         #print(x.shape)
         # x = self.linear1(x)
-        # x = self.bn1(x)
+        # #x = self.bn1(x)
         # x = self.relu(x)
         # x = self.linear2(x)
-        # x = self.bn2(x)
-        #x = x.permute(1, 0, 2)
+        #x = self.bn2(x)
+        #x = x.permute(0,2,1)
         x = self.output_layer(x)
         return x # [seq_len, batch_size]
 
 class ERP_decoder(nn.modules.Module):
-    def __init__(self,ts_steps, d_model, dropout = 0.1):
+    def __init__(self,ts_steps, d_model, dropout = 0.3):
         super().__init__()
         self.linear = nn.Linear(d_model, 1)
         self.linear2 = nn.Linear(ts_steps,1)
-        self.relu1 = nn.GELU()
+        self.relu1 = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(ts_steps)
         self.bn2 = nn.BatchNorm1d(1)
         self.dropout1 = nn.Dropout(dropout)
-        
+        self.output_layer =self.build_output_module(d_model, ts_steps, 1)
+
+    def build_output_module(self, d_model, max_len, num_classes):
+        output_layer = nn.Linear(d_model * max_len, num_classes)
+        # no softmax (or log softmax), because CrossEntropyLoss does this internally. If probabilities are needed,
+        # add F.log_softmax and use NLLoss
+        return output_layer
+
     def forward(self, x):
         # We describe the size of the tensors in each step
         # (batch_size, ts_steps, d_model)
 
         x = self.linear(x) # (batch_size, ts_steps, 1)
-        x = x.squeeze(-1) # (batch_size, ts_steps)
-        x = self.bn1(x) 
+        x = self.bn1(x)
+        #x = x.squeeze(-1) # (batch_size, ts_steps)
         x = self.relu1(x) # (batch_size, ts_steps)
         x = self.dropout1(x) # apply dropout
+        x = x.squeeze(-1) # (batch_size, ts_steps)
+        
         x = self.linear2(x) # (batch_size, 1)
         x = self.bn2(x)
         x = x.squeeze(-1) # (batch_size)
-        return x 
-    
-class Emotion_decoder(nn.Module): 
+        return x
+
+class Emotion_decoder(nn.Module):
     """
     This class defines the decoder of the Emotion model. It takes the output of the encoder and returns the prediction.
     """
@@ -68,7 +77,7 @@ class Emotion_decoder(nn.Module):
         self.bn1 = nn.BatchNorm1d(ts_steps)
         self.bn2 = nn.BatchNorm1d(n_emotions)
         self.dropout1 = nn.Dropout(dropout)
-    
+
     def forward(self, x):
         # We describe the size of the tensors in each step
         # (batch_size, ts_steps, d_model)
@@ -78,20 +87,20 @@ class Emotion_decoder(nn.Module):
         x = self.dropout1(x)
         x = self.linear2(x)
         return x
-    
-class ValenceArousal_decoder(nn.Module): 
+
+class ValenceArousal_decoder(nn.Module):
     """
     This class defines the decoder of the Valence_Arousal model. It takes the output of the encoder and returns the prediction.
     """
     def __init__(self, d_model,ts_steps, dropout=0.1):
         super(ValenceArousal_decoder, self).__init__()
         self.linear = nn.Linear(d_model, 1)
-        self.linear2 = nn.Linear(ts_steps,2)
+        self.linear2 = nn.Linear(ts_steps,1)
         self.relu1 = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(ts_steps)
         self.bn2 = nn.BatchNorm1d(2)
         self.dropout1 = nn.Dropout(dropout)
-    
+
     def forward(self, x):
         # We describe the size of the tensors in each step
         # (batch_size, ts_steps, d_model)
@@ -100,4 +109,5 @@ class ValenceArousal_decoder(nn.Module):
         x = self.relu1(x)
         x = self.dropout1(x)
         x = self.linear2(x)
+        x = x.squeeze(-1)
         return x

@@ -18,7 +18,7 @@ This script is used to train a model to predict an emotion. The model is trained
 This architecture is the one used by the UVA university to detect ERPs in EEG signals.
 """
 
-dataset_path = os.path.join(os.getcwd(), 'data/combined_data.h5')
+dataset_path = os.path.join(os.getcwd(), 'data/deap_stress_4s_4channel.h5')
 
 # LOAD DATASET
 hf = h5py.File(dataset_path, 'r')
@@ -59,9 +59,9 @@ def z_score_normalization(data):
     return normalize_data
 
 
-features = z_score_normalization(features)
-plt.plot(features[0, :,0])
-plt.show()
+# features = z_score_normalization(features)
+# plt.plot(features[0, :,0])
+# plt.show()
 
 features = features.reshape(
     (features.shape[0],1, features.shape[1],
@@ -91,11 +91,11 @@ print(f"Validation dataset: {len(val_dataset)} samples")
 pretrained_weights_path = 'erp_checkpoints/EEGInceptionPL-v8.ckpt'
 
 # Initialize your model
-model = EEGInceptionPL(pretrained_path=pretrained_weights_path, learning_rate=0.001, n_classes=1)
+model = EEGInceptionPL(learning_rate=0.001, n_classes=1)
 
 # Load pre-trained weights
-#pretrained_dict = torch.load(pretrained_weights_path)
-#model_pre = EEGInceptionPL.load_from_checkpoint(pretrained_weights_path)
+# pretrained_dict = torch.load(pretrained_weights_path)
+# model_pre = EEGInceptionPL.load_from_checkpoint(pretrained_weights_path)
 # Prepare to train the model
 batch_size = 32  # You can adjust this value as needed
 

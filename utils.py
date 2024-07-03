@@ -4,6 +4,7 @@ import pyedflib
 from scipy.signal import resample, butter, lfilter
 from sklearn.preprocessing import OneHotEncoder
 import h5py
+import torch
 
 def plot_masked_data(signals, signal_masked, signal_mask, seq_length=1280, n_channels=8):
     fig, axs = plt.subplots(n_channels, 1, figsize=(15, 10))
@@ -112,3 +113,15 @@ def min_max_normalization(data):
         data[:,i] = (data[:,i] - np.min(data[:,i])) / (np.max(data[:,i]) - np.min(data[:,i]))
     return data
 
+
+def padding_mask(lengths, max_len=None):
+    """
+    Used to mask padded positions: creates a (batch_size, max_len) boolean mask from a tensor of sequence lengths,
+    where 1 means keep element at this position (time step)
+    """
+    batch_size = lengths.numel()
+    max_len = max_len or lengths.max_val()  # trick works because of overloading of 'or' operator for non-boolean types
+    return (torch.arange(0, max_len, device=lengths.device)
+            .type_as(lengths)
+            .repeat(batch_size, 1)
+            .lt(lengths.unsqueeze(1)))
