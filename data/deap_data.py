@@ -61,7 +61,7 @@ def define_stress_labels(subject):
     stress[(valence < 3) & (arousal > 5)] = 1
 
     calm = np.zeros_like(valence)
-    calm[ (arousal <4) & (valence < 6) & (valence > 4)]= 1
+    calm[(arousal <4) & (valence < 6) & (valence > 4)]= 1
     # Get the indices of the stress and calm labels
     stress_indices = np.where(stress == 1)[0]
     calm_indices = np.where(calm == 1)[0]

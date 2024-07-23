@@ -62,13 +62,14 @@ def filter_eeg_channels(raw, interest_channels):
     return raw
 
 def downsample_eeg_data(raw, fs_new):
-    raw.resample(fs_new)
+    new_raw = raw.resample(fs_new)
+    return new_raw
 
 def prepare_data(raw):
     # Get the time points of the raw data
     raw_np1 = raw.get_data()
     raw_np = downsample_eeg_data(raw, 128)
-    raw_np = raw.get_data()
+    raw_np = raw_np.get_data()  
     raw_filtered = bandpass_filter(raw_np, 4, 45, 128)
     divided_signals = divide_signal(raw_filtered, 512)
     return divided_signals
@@ -104,5 +105,5 @@ if __name__ == '__main__':
     # # plt.show()
     all_lemon = main(data_path)
     print(all_lemon.shape)
-    with h5py.File('all_lemon_4s_8channel.h5', 'w') as hf:
+    with h5py.File('all_lemon_4s_8channel1.h5', 'w') as hf:
         hf.create_dataset("data", data=all_lemon)

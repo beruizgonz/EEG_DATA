@@ -115,8 +115,8 @@ if __name__ == '__main__':
     data_hf5 = os.path.join('data', 'UVA-DATASET', 'archive', 'GIB-UVA ERP-BCI.hdf5')
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
     parser = ArgumentParser()
-    parser.add_argument('--dataset_path', type=str, default=os.path.join(parent_dir, 'data/tuh_signals_4s.h5'), help='Path to the dataset')
-    parser.add_argument('--output_path', type=str, default=os.path.join(parent_dir,'data/TUEH-mask-4s-8channel.h5'), help='Path to save the masked data')
+    parser.add_argument('--dataset_path', type=str, default=os.path.join(parent_dir, 'data/all_lemon_4s_8channel.h5'), help='Path to the dataset')
+    parser.add_argument('--output_path', type=str, default=os.path.join(parent_dir,'data/LEMON-mask-4s-8channel1.h5'), help='Path to save the masked data')
     parser.add_argument('--type_mask', type=str, default='noise', help='Type of mask to apply (noise, french)')
 
     parser.add_argument('--masking_ratio', type=float, default=0.15, help='Masking ratio')
@@ -145,6 +145,7 @@ if __name__ == '__main__':
     if args.type_mask == 'noise':
         # Apply the mask to all the samples
         mask = np.array([noise_mask(sample,args.masking_ratio) for sample in features])
+        print(mask.shape, features.shape)
         masked_data = np.array([apply_mask(sample, mask) for sample, mask in zip(features, mask)])
     elif args.type_mask == 'french':
         # features = features.transpose(0,2,1)

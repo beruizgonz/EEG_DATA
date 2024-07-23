@@ -36,4 +36,4 @@ class MaskedMSELoss(nn.Module):
         non_masked_pred = torch.masked_select(y_pred, ~mask)
         non_masked_true = torch.masked_select(y_true, ~mask)
 
-        return self.mse_loss(masked_pred, masked_true) 
+        return 0.9*self.mse_loss(masked_pred, masked_true) + 0.1*self.mse_loss(non_masked_pred, non_masked_true)

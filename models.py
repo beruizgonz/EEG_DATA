@@ -103,6 +103,7 @@ class EEG_ERP(LightningModule):
         self.encoder = encoder
         self.decoder = decoder
         self.loss_fn = nn.BCEWithLogitsLoss()
+        # self.save_hyperparameters()
 
     def forward(self, x):
         x = self.covnet(x)
@@ -188,7 +189,7 @@ class EEG_Emotion(LightningModule):
     #     return self.shared_step(batch, "test")
 
     def configure_optimizers(self):
-        optimizer =  optim.Adam(self.parameters(), lr=self.learning_rates)
+        optimizer =  optim.Adam(self.parameters(), lr=self.learning_rates, weight_decay=0.01)
         return optimizer    
 
 

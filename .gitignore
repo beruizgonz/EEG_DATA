@@ -41,3 +41,5 @@ data/DENS/
 lightning_logs/
 
 EEGInception/model/
+
+data/

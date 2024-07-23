@@ -181,6 +181,13 @@ class Valence_Arousal(Dataset):
         X = self.signals_n[idx].transpose(1,0)
         Y = self.valence[idx]
         return torch.from_numpy(X).float(), Y.astype(np.float32)
+    
+def fourier_transform(eeg_signal, channel): 
+    """
+    Perform the fourier transform on the signal
+    """
+    fourier_transform = np.fft.fft(eeg_signal[:, channel])
+    return fourier_transform
 
 if __name__ == "__main__":
     # Load an ecg of masked dataset and plot mask and the ecg
@@ -194,14 +201,17 @@ if __name__ == "__main__":
     print(dataset1[0][0].shape)
     sample1 = dataset1[0]
 
-    dataset2 = StressDataset(path_stress, normalize = 'normalization')
+    dataset2 = StressDataset(path_stress, normalize = 'None')
     sample2 = dataset2[0]
 
     dataset3 = MaskedDataset(path_lemon, normalize='normalization')
     sample3 = dataset3[0]
-    
+    fourier_sample = fourier_transform(sample3[1], 0)
+    print(fourier_sample.shape)
+
     dataset4 = ERPDataset('./UVA-DATASET/archive/GIB-UVA ERP-BCI.hdf5', normalize='normalization')
     sample4 = dataset4[18]
+
 
     # dataset5 = ERPDataset('./UVA-DATASET/archive/GIB-UVA ERP-BCI.hdf5', normalize='min_max')
     # sample5 = dataset5[18]
@@ -225,12 +235,12 @@ if __name__ == "__main__":
     # Create a secondary y-axis sharing the same x-axis
     ax2 = ax1.twinx()
     # Plot the second signal on the secondary y-axis
-    ax2.plot(sample6[0][:,6], 'r-', label='Signal 2')
-    ax2.set_ylabel('Signal 2 (red)', color='r')
-    ax2.tick_params('y', colors='r')
+    ax1.plot(sample3[1][:,6], 'r-', label='Signal 2')
+    ax1.set_ylabel('Signal 2 (red)', color='r')
+    ax1.tick_params('y', colors='r')
 
     # Adding legends
-    fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
+    #fig.legend(loc='upper left', bbox_to_anchor=(0.1, 0.9))
     fig.legend(loc='upper right', bbox_to_anchor=(0.9, 0.9))
 
     # Adding a title

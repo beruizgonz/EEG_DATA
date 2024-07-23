@@ -40,7 +40,7 @@ def normalization(signal, apply_signal, n_channels=8):
         apply_signal[:, j, :] = (apply_signal[:, j, :] - means) / (stds + eps)
     return apply_signal
 
-def bandpass_filter(signal, lowcut, highcut, fs, order=5):
+def bandpass_filter(signal, lowcut, highcut, fs, order=0):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -71,7 +71,7 @@ def downsampled_signals(signal, freq, new_freq):
     
     return new_signal
 
-def  read_edf(data_path, channels):
+def read_edf(data_path, channels):
     f = pyedflib.EdfReader(data_path)
     n = len(channels)
     sigbufs = [f.readSignal(i) for i in range(n)]
@@ -104,7 +104,7 @@ def convert_csv_h5(path_file):
 def z_score_normalization(data):
     # Normalize the data per channel
     for i in range(data.shape[1]):
-        data[:,i] = (data[:,i] - np.mean(data[:,i])) / np.std(data[:,i])
+        data[i,:] = (data[i,:] - np.mean(data[i,:])) / np.std(data[i,:])
     return (data - np.mean(data)) / np.std(data)
 
 def min_max_normalization(data):
